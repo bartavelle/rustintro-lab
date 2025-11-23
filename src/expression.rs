@@ -1,118 +1,134 @@
-use std::collections::HashMap;
+mod withenum {
+    enum Expr {
+        Literal(i32),
+        Add(Box<Expr>, Box<Expr>),
+    }
 
-use crate::error::{Expr, Operator};
+    impl Expr {
+        fn add(self, r: Self) -> Self {
+            Expr::Add(Box::new(self), Box::new(r))
+        }
 
-// Add a new method that works on Expr
+        fn lit(v: i32) -> Self {
+            Self::Literal(v)
+        }
 
-fn list_variables(e: &Expr) -> Vec<String> {
-    todo!()
-}
+        // fn mul(self, r: Self) -> Self {
+        //     Expr::Mul(Box::new(self), Box::new(r))
+        // }
+    }
 
-// Now how to add a new variant to Expr that will let us reuse the code we already have?
-//
-//
-// Really, how?
+    fn eval(expr: &Expr) -> i32 {
+        match expr {
+            Expr::Literal(n) => *n,
+            Expr::Add(l, r) => eval(l) + eval(r),
+        }
+    }
 
-// let's do something else : open union
+    // 1. create a print function that looks like :
+    // fn print(expr: &Expr) -> String { ... }
+    // uncomment the `tprint` test
 
-pub enum LR<A, B> {
-    L(A),
-    R(B),
-}
+    // 2. add a new variant, Mul(Box<Expr>, Box<Expr>), and update the code
+    // - update all code that needs to me updates
+    // - uncomment the `mul` function and the `tmul` test
 
-trait Eval {
-    fn eval(&self, vars: &HashMap<&str, i64>) -> Option<i64>;
-}
+    /*
+    What code did you have to modify to add a new variant?
+    What code did you have to modify to add a new operation?
+    Which extension was easier? Why?
+    */
 
-impl<A: Eval, B: Eval> Eval for LR<A, B> {
-    fn eval(&self, vars: &HashMap<&str, i64>) -> Option<i64> {
-        todo!()
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        #[test]
+        fn basic() {
+            let e = Expr::lit(5).add(Expr::lit(8));
+            assert_eq!(eval(&e), 13)
+        }
+
+        // #[test]
+        // fn tprint() {
+        //     let e = Expr::lit(5).add(Expr::lit(8));
+        //     assert_eq!(print(&e), "(5 + 8)")
+        // }
+        //
+        // #[test]
+        // fn tmul() {
+        //     let e = Expr::lit(5).add(Expr::lit(8)).mul(Expr::lit(4));
+        //     assert_eq!(eval(&e), 52);
+        //     assert_eq!(print(&e), "((5 + 8) * 4)")
+        // }
     }
 }
 
-struct SBinop<E> {
-    l: Box<E>,
-    o: Operator,
-    r: Box<E>,
-}
-
-struct SVar(String);
-struct SLit(i64);
-
-struct NewExpr(LR<SBinop<NewExpr>, LR<SVar, SLit>>);
-
-impl From<SBinop<NewExpr>> for NewExpr {
-    fn from(value: SBinop<NewExpr>) -> Self {
-        todo!()
-    }
-}
-
-impl From<&str> for NewExpr {
-    fn from(value: &str) -> Self {
-        todo!()
-    }
-}
-
-impl From<i64> for NewExpr {
-    fn from(value: i64) -> Self {
-        todo!()
-    }
-}
-
-impl Eval for SVar {
-    fn eval(&self, vars: &HashMap<&str, i64>) -> Option<i64> {
-        todo!()
-    }
-}
-
-impl Eval for SLit {
-    fn eval(&self, _vars: &HashMap<&str, i64>) -> Option<i64> {
-        todo!()
-    }
-}
-
-impl Eval for NewExpr {
-    fn eval(&self, vars: &HashMap<&str, i64>) -> Option<i64> {
-        todo!()
-    }
-}
-
-impl<E: Eval> Eval for SBinop<E> {
-    fn eval(&self, vars: &HashMap<&str, i64>) -> Option<i64> {
-        todo!()
-    }
-}
-
-/*
-  1/ create a new struct, called Square<E>
-  2/ implement the eval trait
-  3/ create a new Expr type that integrates the new square operation
-  4/ check that is works by writing a test!
-*/
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::error::binop;
-
-    #[test]
-    fn t_list_variables() {
-        use Operator::*;
-        let o = binop(Sub, binop(Add, "a", binop(Sub, "b", "c")), 5);
-        assert_eq!(
-            list_variables(&o),
-            ["a", "b", "c"].into_iter().map(String::from).collect::<Vec<_>>()
-        )
+mod withtrait {
+    trait Eval {
+        fn eval(&self) -> i32;
     }
 
-    #[test]
-    fn open_eval() {
-        let vars = HashMap::from([("a", 15_i64)]);
-        let expr = NewExpr::from(SBinop {
-            l: Box::new("a".into()),
-            r: Box::new(45.into()),
-            o: Operator::Add,
-        });
-        assert_eq!(expr.eval(&vars), Some(60))
+    type Expr = Box<dyn Eval>;
+
+    #[derive(Clone)]
+    struct Literal {
+        value: i32,
+    }
+
+    struct Add {
+        left: Expr,
+        right: Expr,
+    }
+
+    impl Eval for Add {
+        fn eval(&self) -> i32 {
+            self.left.eval() + self.right.eval()
+        }
+    }
+
+    impl Eval for Literal {
+        fn eval(&self) -> i32 {
+            self.value
+        }
+    }
+
+    // 1. add a new variant, Mul { left: Expr, right: Expr }, and update the code
+    // - uncomment the tmul test
+
+    // 2. add a print trait
+    // - what happened?
+
+    trait Print {
+        fn print(&self) -> String;
+    }
+
+    // - can you reuse the previous structures?
+
+    #[cfg(test)]
+    mod test {
+        use super::*;
+
+        #[test]
+        fn basic() {
+            let e = Add {
+                left: Box::new(Literal { value: 5 }),
+                right: Box::new(Literal { value: 8 }),
+            };
+            assert_eq!(e.eval(), 13)
+        }
+
+        // #[test]
+        // fn tmul() {
+        //     let a = Add {
+        //         left: Box::new(Literal { value: 5 }),
+        //         right: Box::new(Literal { value: 8 }),
+        //     };
+        //     let e = Mul {
+        //         left: Box::new(a),
+        //         right: Box::new(Literal { value: 4 }),
+        //     };
+        //     assert_eq!(e.eval(), 52)
+        // }
     }
 }

@@ -196,6 +196,27 @@ mod test {
     }
 
     #[test]
+    fn uuid_encode() {
+        let source = uuid!["a3b674a2-b950-4e44-b32b-a29345e38e36"];
+        let mut wr = Cursor::new(Vec::new());
+        encode::uuid(&mut wr, &source).unwrap();
+        assert_eq!(
+            wr.into_inner(),
+            &[16, 163, 182, 116, 162, 185, 80, 78, 68, 179, 43, 162, 147, 69, 227, 142, 54]
+        )
+    }
+
+    #[test]
+    fn uuid_decode() {
+        let expected = uuid!["a3b674a2-b950-4e44-b32b-a29345e38e36"];
+        let mut rd = Cursor::new([
+            16, 163, 182, 116, 162, 185, 80, 78, 68, 179, 43, 162, 147, 69, 227, 142, 54,
+        ]);
+        let decoded = decode::uuid(&mut rd).unwrap();
+        assert_eq!(decoded, expected);
+    }
+
+    #[test]
     fn serverid_encode() {
         let source = ServerId(uuid!["a3b674a2-b950-4e44-b32b-a29345e38e36"]);
         let mut wr = Cursor::new(Vec::new());

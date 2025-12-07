@@ -12,7 +12,7 @@ pub fn u128<R: Read>(rd: &mut R) -> anyhow::Result<u128> {
     todo!()
 }
 
-fn uuid<R: Read>(rd: &mut R) -> anyhow::Result<Uuid> {
+pub fn uuid<R: Read>(rd: &mut R) -> anyhow::Result<Uuid> {
     todo!()
 }
 

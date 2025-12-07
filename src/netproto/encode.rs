@@ -23,7 +23,7 @@ where
 /* UUIDs are 128bit values, but in the situation they are represented as [u8; 16]
   don't forget that arrays are encoded with their sizes first, and then their content
 */
-fn uuid<W>(w: &mut W, m: &Uuid) -> std::io::Result<()>
+pub fn uuid<W>(w: &mut W, m: &Uuid) -> std::io::Result<()>
 where
     W: Write,
 {
